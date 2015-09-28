@@ -4,7 +4,6 @@ package model;
  * Created by blutarche on 9/28/15 AD.
  */
 
-
 public class NavDrawerItem {
     private boolean showNotify;
     private String title;
