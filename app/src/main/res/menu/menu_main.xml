@@ -4,20 +4,21 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:background="?attr/colorPrimary">
 
-<item
-    android:id="@+id/action_refresh"
-    android:title="@string/action_refresh"
-    android:orderInCategory="100"
-    android:icon="@drawable/ic_refresh_action"
-    app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_refresh"
+        android:title="@string/action_refresh"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_refresh_action"
+        app:showAsAction="ifRoom" />
 
-<item
-    android:id="@+id/action_filter"
-    android:title="@string/action_filter"
-    android:orderInCategory="100"
-    android:icon="@drawable/ic_filter_action"
-    app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_filter"
+        android:title="@string/action_filter"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_filter_action"
+        app:showAsAction="ifRoom" />
 
 </menu>
