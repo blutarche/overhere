@@ -30,6 +30,7 @@ import android.widget.Toast;
 import android.net.Uri;
 import com.eggcellent.overhere.FilterFragment;
 import com.eggcellent.overhere.MapsFragment;
+import com.facebook.appevents.AppEventsLogger;
 
 
 /**
@@ -187,10 +188,25 @@ public class MainActivity extends AppCompatActivity
         // Do stuff
     }
 
-
     @Override
     public void onMapsFragmentInteraction(Uri uri) {
         // Do stuff
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Logs 'install' and 'app activate' App Events.
+        AppEventsLogger.activateApp(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        // Logs 'app deactivate' App Event.
+        AppEventsLogger.deactivateApp(this);
     }
 
 }

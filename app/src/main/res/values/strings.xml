@@ -19,9 +19,6 @@
     <!-- navigation drawer item labels  -->
     <string-array name="nav_drawer_labels">
         <item>@string/nav_item_home</item>
-        <item>@string/nav_item_friends</item>
-        <item>@string/nav_item_my_status</item>
-        <item>@string/nav_item_settings</item>
         <item>@string/nav_item_logout</item>
     </string-array>
 
