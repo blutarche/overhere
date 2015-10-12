@@ -29,6 +29,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 import android.net.Uri;
 import com.eggcellent.overhere.FilterFragment;
+import com.eggcellent.overhere.MapsFragment;
 
 
 /**
@@ -149,7 +150,7 @@ public class MainActivity extends AppCompatActivity
         String title = getString(R.string.app_name);
         switch (id) {
             case 0:
-                //fragment = new MapsActivity();
+                fragment = new MapsFragment();
                 title = getString(R.string.title_home);
             break;
             case 1:
