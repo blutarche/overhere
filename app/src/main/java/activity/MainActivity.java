@@ -37,13 +37,15 @@ import com.eggcellent.overhere.MapsFragment;
  */
 
 public class MainActivity extends AppCompatActivity
-    implements FilterFragment.OnFragmentInteractionListener {
+    implements FilterFragment.OnFragmentInteractionListener, MapsFragment.OnFragmentInteractionListener {
     private Toolbar mToolbar;
     private ListView mDrawerList;
     private DrawerLayout mDrawerLayout;
     private ArrayAdapter<String> mAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     private String mActivityTitle;
+
+    public static FragmentManager fragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +64,8 @@ public class MainActivity extends AppCompatActivity
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+
+        displayView(0);
     }
 
     private void addDrawerItems() {
@@ -167,8 +171,9 @@ public class MainActivity extends AppCompatActivity
             break;
         }
         if (fragment != null) {
-            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.setCustomAnimations(R.anim.enter, R.anim.exit);
             fragmentTransaction.replace(R.id.container, fragment);
             fragmentTransaction.commit();
 
@@ -179,6 +184,12 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onFilterFragmentInteraction(Uri uri) {
+        // Do stuff
+    }
+
+
+    @Override
+    public void onMapsFragmentInteraction(Uri uri) {
         // Do stuff
     }
 
