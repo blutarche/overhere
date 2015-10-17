@@ -53,7 +53,6 @@ public class FacebookFragment extends Fragment {
             Profile profile = Profile.getCurrentProfile();
             displayMessage(profile);
             Log.d(TAG, "Facebook Success");
-            ((MainActivity)getActivity()).publicDisplayView(0);
         }
 
         @Override
@@ -81,8 +80,10 @@ public class FacebookFragment extends Fragment {
 
         accessTokenTracker= new AccessTokenTracker() {
             @Override
-            protected void onCurrentAccessTokenChanged(AccessToken oldToken, AccessToken newToken) {
-
+            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
+                if (newAccessToken!=null) {
+                    gotoMainActivity();
+                }
             }
         };
 
@@ -110,9 +111,8 @@ public class FacebookFragment extends Fragment {
         textView = (TextView) view.findViewById(R.id.textView);
 
         loginButton.setFragment(this);
-        loginButton.setReadPermissions(Arrays.asList("user_about_me","user_friends","user_status","user_location","user_tagged_places","user_posts"));
+        loginButton.setReadPermissions(Arrays.asList("user_about_me", "user_friends", "user_status", "user_location", "user_tagged_places", "user_posts"));
         loginButton.registerCallback(callbackManager, callback);
-
     }
 
     @Override
@@ -125,11 +125,21 @@ public class FacebookFragment extends Fragment {
     private void displayMessage(Profile profile){
         if(profile != null){
             textView.setText(profile.getName());
-            ((MainActivity)getActivity()).publicDisplayView(0);
         }
         else {
             textView.setText("None");
         }
+    }
+
+    private void gotoMainActivity() {
+        ((MainActivity)getActivity()).publicDisplayView(0);
+    }
+
+    private boolean isLoggedin() {
+        boolean loggedIn=false;
+        if(AccessToken.getCurrentAccessToken()!=null)
+            loggedIn=true;
+        return loggedIn;
     }
 
     @Override
@@ -144,7 +154,6 @@ public class FacebookFragment extends Fragment {
         super.onResume();
         Profile profile = Profile.getCurrentProfile();
         displayMessage(profile);
-
     }
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name

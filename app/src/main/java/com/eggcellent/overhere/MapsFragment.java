@@ -1,6 +1,13 @@
 package com.eggcellent.overhere;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,17 +23,22 @@ import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.widget.RelativeLayout;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,13 +49,11 @@ public class MapsFragment extends Fragment {
     private static View view;
 
     private static GoogleMap mMap;
-    private static Double latitude, longitude;
 
     private FragmentActivity myContext;
-    private List<String> friendsId = new ArrayList<String>();
-    private List<String> postsId = new ArrayList<String>();
+    private LatLng myLatLng;
 
-    private static final String TAG = MapsFragment.class.getSimpleName();
+    private final String TAG = MapsFragment.class.getSimpleName();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,10 +62,6 @@ public class MapsFragment extends Fragment {
             return null;
         }
         view = (RelativeLayout) inflater.inflate(R.layout.fragment_maps, container, false);
-        // Passing hardcoded values for latitude & longitude. Please change as per your need. This is just used to drop a Marker on the Map
-        latitude = 26.78;
-        longitude = 72.56;
-
         setUpMapIfNeeded();
 
         return view;
@@ -64,27 +70,30 @@ public class MapsFragment extends Fragment {
     public void setUpMapIfNeeded() {
         if (mMap != null) {
             setUpMap();
+            mMap.clear();
         }
         if (mMap == null) {
             mMap = ((SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map)).getMap();
             if (mMap != null) {
                 setUpMap();
+                mMap.clear();
             }
         }
         getFriendsList();
-        getFriendsFeed();
     }
 
     private static void setUpMap() {
         mMap.setMyLocationEnabled(true);
-        mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("My Home").snippet("Home Address"));
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude,
-                longitude), 12.0f));
+    }
+
+    public void refreshFeed() {
+        getFriendsList();
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         setUpMapIfNeeded();
+        refreshFeed();
     }
 
     @Override
@@ -104,7 +113,8 @@ public class MapsFragment extends Fragment {
     }
 
     private void getFriendsList () {
-        friendsId = new ArrayList<String>();
+        mMap.clear();
+        getFriendsInfo("me");
         new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
                 "/me/friends",
@@ -112,17 +122,15 @@ public class MapsFragment extends Fragment {
                 HttpMethod.GET,
                 new GraphRequest.Callback() {
                     public void onCompleted(GraphResponse response) {
-                        Log.d(TAG, "getFriendsData onCompleted : response " + response);
                         try {
                             JSONObject jsonObject = response.getJSONObject();
                             Log.d(TAG, "getFriendsData onCompleted : jsonObject " + jsonObject);
-                            JSONObject friends = jsonObject.getJSONObject("data");
-                            Iterator<?> keys = friends.keys();
-                            while (keys.hasNext()) {
-                                String key = (String) keys.next();
-                                if (friends.get(key) instanceof JSONObject) {
-                                    friendsId.add(friends.getString("id"));
-                                }
+                            JSONArray friends = jsonObject.getJSONArray("data");
+                            Log.d(TAG, "getFriendsData onCompleted : friends " + friends);
+                            for(int i=0; i<friends.length(); i++){
+                                JSONObject user = friends.getJSONObject(i);
+                                getFriendsInfo(user.getString("id"));
+                                Log.d(TAG, "friend's Id: " + user.getString("id"));
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -132,56 +140,114 @@ public class MapsFragment extends Fragment {
         ).executeAsync();
     }
 
-    private void getFriendsFeed() {
+    private void getFriendsInfo(final String userId) {
         Bundle params = new Bundle();
-        params.putString("with", "location");
-        postsId = new ArrayList<String>();
-        for( String userId : friendsId ) {
-            new GraphRequest(
-                    AccessToken.getCurrentAccessToken(),
-                    "/"+userId+"/feed",
-                    params,
-                    HttpMethod.GET,
-                    new GraphRequest.Callback() {
-                        public void onCompleted(GraphResponse response) {
-                            try {
-                                JSONObject jsonObject = response.getJSONObject();
-                                Log.d(TAG, "getFeed onCompleted : jsonObject " + jsonObject);
-                                JSONObject posts = jsonObject.getJSONObject("data");
-                                Iterator<?> keys = posts.keys();
-                                while (keys.hasNext()) {
-                                    String key = (String) keys.next();
-                                    if (posts.get(key) instanceof JSONObject) {
-                                        postsId.add(posts.getString("id"));
-                                    }
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
+        params.putString("redirect","0");
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"+userId+"/picture",
+                params,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        try {
+                            JSONObject jsonObject = response.getJSONObject();
+                            Log.d(TAG, "getInfo onCompleted : jsonObject " + jsonObject);
+                            JSONObject pic = jsonObject.getJSONObject("data");
+                            String url = pic.getString("url");
+                            getFriendsFeed(userId, url);
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
-            ).executeAsync();
-        }
-        displayPostsOnMap();
+                }
+        ).executeAsync();
     }
 
-    private void displayPostsOnMap() {
-        for (String postId : postsId) {
-            new GraphRequest(
-                    AccessToken.getCurrentAccessToken(),
-                    "/"+postId,
-                    null,
-                    HttpMethod.GET,
-                    new GraphRequest.Callback() {
-                        public void onCompleted(GraphResponse response) {
+    private void getFriendsFeed(String userId, final String profilePicURL) {
+        Bundle params = new Bundle();
+        params.putString("with", "location");
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"+userId+"/feed",
+                params,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        try {
                             JSONObject jsonObject = response.getJSONObject();
-                            Log.d(TAG, "Post : jsonObject " + jsonObject);
+                            Log.d(TAG, "getFeed onCompleted : jsonObject " + jsonObject);
+                            JSONArray posts = jsonObject.getJSONArray("data");
+                            for(int i=0; i<posts.length(); i++) {
+                                JSONObject post = posts.getJSONObject(i);
+                                getPost(post.getString("id"), profilePicURL);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
                     }
-            ).executeAsync();
-            mMap.addMarker(new MarkerOptions().position(new LatLng(latitude, longitude)).title("My Home").snippet("Home Address"));
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude,
-                    longitude), 12.0f));
+                }
+        ).executeAsync();
+    }
+
+    private void getPost (final String postId, final String profilePicURL) {
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"+postId,
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        try {
+                            JSONObject jsonObject = response.getJSONObject();
+                            Log.d(TAG, "Post : jsonObject " + jsonObject);
+                            getPlace(postId, jsonObject.getString("message"), jsonObject.getString("story"), profilePicURL);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        ).executeAsync();
+    }
+
+    private void getPlace (String postId, final String message, final String story, final String profilePicURL) {
+        Bundle params = new Bundle();
+        params.putString("fields", "place");
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/"+postId,
+                params,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        try {
+                            JSONObject jsonObject = response.getJSONObject();
+                            Log.d(TAG, "Place : jsonObject " + jsonObject);
+                            JSONObject place = jsonObject.getJSONObject("place");
+                            JSONObject location = place.getJSONObject("location");
+                            float latitude = Float.parseFloat(location.getString("latitude"));
+                            float longitude = Float.parseFloat(location.getString("longitude"));
+                            pushMarker(latitude, longitude, story, message, profilePicURL);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+        ).executeAsync();
+    }
+
+    private void pushMarker (float latitude, float longitude, String title, String snippet, String markerURL) {
+        try {
+            MarkerOptions mark = new MarkerOptions();
+            mark.position(new LatLng(latitude, longitude));
+            mark.title(title);
+            mark.snippet(snippet);
+            Log.d(TAG, "PUSHING MARKER ::: title: " + title + " ,,, snippet: " + snippet + " ,,, latitude: " + latitude + " ,,, longitude: " + longitude + " ,,, markerURL: " + markerURL);
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
+            mMap.addMarker(mark);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

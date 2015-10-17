@@ -141,13 +141,16 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
+            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+            MapsFragment mFragment = (MapsFragment) fragment;
+            mFragment.refreshFeed();
             return true;
         }
 
-        if (id == R.id.action_filter) {
-            displayView(5);
-            return true;
-        }
+//        if (id == R.id.action_filter) {
+//            displayView(5);
+//            return true;
+//        }
 
         // Activate the navigation drawer toggle
         if (mDrawerToggle.onOptionsItemSelected(item)) {
@@ -161,6 +164,16 @@ public class MainActivity extends AppCompatActivity
         displayView(id);
     }
 
+    private void fullScreen () {
+        mToolbar.setVisibility(View.GONE);
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
+    }
+
+    private void activityScreen() {
+        mToolbar.setVisibility(View.VISIBLE);
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
+    }
+
     private void displayView (int id) {
         Fragment fragment = null;
         String title = getString(R.string.app_name);
@@ -168,12 +181,13 @@ public class MainActivity extends AppCompatActivity
             case 0:
                 fragment = new MapsFragment();
                 title = getString(R.string.title_home);
+                activityScreen();
             break;
             case 1:
                 fragment = new FacebookFragment();
                 FacebookFragment fFragment = (FacebookFragment) fragment;
                 fFragment.logout();
-                title = getString(R.string.title_activity_facebook);
+                fullScreen();
             break;
             case 2:
             break;
@@ -182,12 +196,10 @@ public class MainActivity extends AppCompatActivity
             case 4:
             break;
             case 5:
-                fragment = new FilterFragment();
-                title = getString(R.string.title_filter);
             break;
             case 6:
                 fragment = new FacebookFragment();
-                title = getString(R.string.title_activity_facebook);
+                fullScreen();
             break;
         }
         if (fragment != null) {
