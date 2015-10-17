@@ -1,5 +1,6 @@
 package activity;
 
+import android.hardware.camera2.params.Face;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
@@ -12,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.eggcellent.overhere.FacebookFragment;
 import com.eggcellent.overhere.R;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
@@ -30,7 +32,13 @@ import android.widget.Toast;
 import android.net.Uri;
 import com.eggcellent.overhere.FilterFragment;
 import com.eggcellent.overhere.MapsFragment;
+import com.eggcellent.overhere.FacebookFragment;
+import com.facebook.AccessToken;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
+import com.facebook.login.LoginResult;
 
 
 /**
@@ -38,7 +46,7 @@ import com.facebook.appevents.AppEventsLogger;
  */
 
 public class MainActivity extends AppCompatActivity
-    implements FilterFragment.OnFragmentInteractionListener, MapsFragment.OnFragmentInteractionListener {
+    implements FilterFragment.OnFragmentInteractionListener, MapsFragment.OnFragmentInteractionListener, FacebookFragment.OnFragmentInteractionListener {
     private Toolbar mToolbar;
     private ListView mDrawerList;
     private DrawerLayout mDrawerLayout;
@@ -53,8 +61,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mDrawerList = (ListView)findViewById(R.id.navList);
-        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.navList);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         mActivityTitle = getTitle().toString();
 
         addDrawerItems();
@@ -66,7 +74,7 @@ public class MainActivity extends AppCompatActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
 
-        displayView(0);
+        displayView(6);
     }
 
     private void addDrawerItems() {
@@ -149,6 +157,9 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+    public void publicDisplayView (int id) {
+        displayView(id);
+    }
 
     private void displayView (int id) {
         Fragment fragment = null;
@@ -159,6 +170,10 @@ public class MainActivity extends AppCompatActivity
                 title = getString(R.string.title_home);
             break;
             case 1:
+                fragment = new FacebookFragment();
+                FacebookFragment fFragment = (FacebookFragment) fragment;
+                fFragment.logout();
+                title = getString(R.string.title_activity_facebook);
             break;
             case 2:
             break;
@@ -169,6 +184,10 @@ public class MainActivity extends AppCompatActivity
             case 5:
                 fragment = new FilterFragment();
                 title = getString(R.string.title_filter);
+            break;
+            case 6:
+                fragment = new FacebookFragment();
+                title = getString(R.string.title_activity_facebook);
             break;
         }
         if (fragment != null) {
@@ -194,6 +213,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    public void onFacebookFragmentInteraction(Uri uri) {
+        // Do stuff
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
 
@@ -208,6 +232,5 @@ public class MainActivity extends AppCompatActivity
         // Logs 'app deactivate' App Event.
         AppEventsLogger.deactivateApp(this);
     }
-
 }
 
