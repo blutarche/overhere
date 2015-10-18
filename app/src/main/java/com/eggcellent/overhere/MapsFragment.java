@@ -89,8 +89,9 @@ public class MapsFragment extends Fragment {
     }
 
     public void refreshFeed() {
-        count = 0;
-        getFriendsList();
+        if (count == 0) {
+            getFriendsList();
+        }
     }
 
     private int getPostCount() {
@@ -114,6 +115,7 @@ public class MapsFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         setUpMapIfNeeded();
         refreshFeed();
+        count = 0;
     }
 
     @Override

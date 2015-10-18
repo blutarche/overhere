@@ -27,15 +27,6 @@ import java.util.Arrays;
 
 import activity.MainActivity;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link FacebookFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link FacebookFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class FacebookFragment extends Fragment {
 
     private CallbackManager callbackManager;
@@ -51,7 +42,6 @@ public class FacebookFragment extends Fragment {
         public void onSuccess(LoginResult loginResult) {
             AccessToken accessToken = loginResult.getAccessToken();
             Profile profile = Profile.getCurrentProfile();
-            displayMessage(profile);
             Log.d(TAG, "Facebook Success");
             gotoMainActivity();
         }
@@ -91,7 +81,7 @@ public class FacebookFragment extends Fragment {
         profileTracker = new ProfileTracker() {
             @Override
             protected void onCurrentProfileChanged(Profile oldProfile, Profile newProfile) {
-                displayMessage(newProfile);
+                //displayMessage(newProfile);
             }
         };
 
@@ -123,15 +113,6 @@ public class FacebookFragment extends Fragment {
 
     }
 
-    private void displayMessage(Profile profile){
-        if(profile != null){
-            textView.setText(profile.getName());
-        }
-        else {
-            textView.setText("None");
-        }
-    }
-
     private void gotoMainActivity() {
         ((MainActivity)getActivity()).publicDisplayView(0);
     }
@@ -154,7 +135,6 @@ public class FacebookFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Profile profile = Profile.getCurrentProfile();
-        displayMessage(profile);
     }
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name

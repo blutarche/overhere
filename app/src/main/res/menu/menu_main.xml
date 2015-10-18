@@ -5,7 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity"
-    android:background="?attr/colorPrimary">
+    android:background="@color/colorPrimary">
 
     <item
         android:id="@+id/action_refresh"
@@ -13,6 +13,14 @@
         android:orderInCategory="100"
         android:icon="@drawable/ic_refresh_action"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_post"
+        android:title="@string/action_post"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_post_event"
+        app:showAsAction="ifRoom" />
+
 
     <!--<item-->
         <!--android:id="@+id/action_filter"-->

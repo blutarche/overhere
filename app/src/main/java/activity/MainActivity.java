@@ -54,6 +54,8 @@ public class MainActivity extends AppCompatActivity
     private ActionBarDrawerToggle mDrawerToggle;
     private String mActivityTitle;
 
+    private int currentView;
+
     public static FragmentManager fragmentManager;
 
     @Override
@@ -61,8 +63,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mDrawerList = (ListView) findViewById(R.id.navList);
         mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.navList);
         mActivityTitle = getTitle().toString();
 
         addDrawerItems();
@@ -72,9 +74,9 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(mToolbar);
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_icon);
         getSupportActionBar().setHomeButtonEnabled(true);
 
+        currentView = -1;
         displayView(6);
     }
 
@@ -140,7 +142,7 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+
         if (id == R.id.action_refresh) {
             Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
             MapsFragment mFragment = (MapsFragment) fragment;
@@ -177,6 +179,8 @@ public class MainActivity extends AppCompatActivity
 
     private void displayView (int id) {
         mDrawerLayout.closeDrawers();
+        if (currentView == id) return;
+        currentView = id;
         Fragment fragment = null;
         String title = getString(R.string.app_name);
         switch (id) {
