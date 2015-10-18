@@ -1,7 +1,9 @@
 package activity;
 
+import android.content.Intent;
 import android.hardware.camera2.params.Face;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -34,11 +36,18 @@ import com.eggcellent.overhere.FilterFragment;
 import com.eggcellent.overhere.MapsFragment;
 import com.eggcellent.overhere.FacebookFragment;
 import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
+import com.facebook.FacebookDialog;
 import com.facebook.FacebookException;
+import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginResult;
+import com.facebook.share.Sharer;
+import com.facebook.share.model.ShareContent;
+import com.facebook.share.model.ShareLinkContent;
+import com.facebook.share.widget.ShareDialog;
 
 
 /**
@@ -75,6 +84,10 @@ public class MainActivity extends AppCompatActivity
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+
+        FacebookSdk.sdkInitialize(getApplicationContext());
+        shareDialog = new ShareDialog(this);
+        callbackManager = CallbackManager.Factory.create();
 
         currentView = -1;
         displayView(6);
@@ -135,6 +148,9 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    CallbackManager callbackManager;
+    ShareDialog shareDialog;
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -142,6 +158,15 @@ public class MainActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+        if (id == R.id.action_post) {
+
+            if (ShareDialog.canShow(ShareLinkContent.class)) {
+                ShareLinkContent linkContent = new ShareLinkContent.Builder()
+                        .setContentUrl(Uri.EMPTY)
+                        .build();
+                shareDialog.show(linkContent);
+            }
+        }
 
         if (id == R.id.action_refresh) {
             Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
