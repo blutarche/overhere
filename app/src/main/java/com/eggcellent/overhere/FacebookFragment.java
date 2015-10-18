@@ -117,11 +117,9 @@ public class FacebookFragment extends Fragment {
         ((MainActivity)getActivity()).publicDisplayView(0);
     }
 
-    private boolean isLoggedin() {
-        boolean loggedIn=false;
-        if(AccessToken.getCurrentAccessToken()!=null)
-            loggedIn=true;
-        return loggedIn;
+    public boolean isLoggedIn() {
+        AccessToken accessToken = AccessToken.getCurrentAccessToken();
+        return accessToken != null;
     }
 
     @Override
@@ -135,6 +133,9 @@ public class FacebookFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Profile profile = Profile.getCurrentProfile();
+        if (isLoggedIn()) {
+            gotoMainActivity();
+        }
     }
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
