@@ -1,6 +1,7 @@
 package com.eggcellent.overhere;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -32,6 +33,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 import org.json.JSONArray;
@@ -54,7 +56,9 @@ public class MapsFragment extends Fragment {
     private LatLng mostRecentLatLng;
     private int count = 0;
 
+    private ProgressDialog progress;
     private final String TAG = MapsFragment.class.getSimpleName();
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -64,6 +68,7 @@ public class MapsFragment extends Fragment {
         }
         view = (RelativeLayout) inflater.inflate(R.layout.fragment_maps, container, false);
         mMap = null;
+        progress = new ProgressDialog(getActivity());
         setUpMapIfNeeded();
 
         return view;
@@ -90,6 +95,8 @@ public class MapsFragment extends Fragment {
 
     public void refreshFeed() {
         if (count == 0) {
+            Log.e("TEST", "getting events!");
+            spinnerInitiate();
             getFriendsList();
         }
     }
@@ -106,6 +113,7 @@ public class MapsFragment extends Fragment {
     }
 
     private void rePositionToRecent() {
+        progress.dismiss();
         Log.d(TAG, "mostRecentLatLng " + mostRecentLatLng);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mostRecentLatLng, 10.0f));
     }
@@ -132,6 +140,12 @@ public class MapsFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         public void onMapsFragmentInteraction(Uri uri);
+    }
+
+    private void spinnerInitiate() {
+        progress.setTitle("Loading event");
+        progress.setMessage("Surely it will worth your time...");
+        progress.show();
     }
 
     private void getFriendsList () {
