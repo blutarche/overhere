@@ -53,6 +53,7 @@ public class FacebookFragment extends Fragment {
             Profile profile = Profile.getCurrentProfile();
             displayMessage(profile);
             Log.d(TAG, "Facebook Success");
+            gotoMainActivity();
         }
 
         @Override

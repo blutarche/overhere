@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(mToolbar);
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu_icon);
         getSupportActionBar().setHomeButtonEnabled(true);
 
         displayView(6);
@@ -171,10 +172,11 @@ public class MainActivity extends AppCompatActivity
 
     private void activityScreen() {
         mToolbar.setVisibility(View.VISIBLE);
-        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_OPEN);
+        mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
     }
 
     private void displayView (int id) {
+        mDrawerLayout.closeDrawers();
         Fragment fragment = null;
         String title = getString(R.string.app_name);
         switch (id) {

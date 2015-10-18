@@ -51,7 +51,8 @@ public class MapsFragment extends Fragment {
     private static GoogleMap mMap;
 
     private FragmentActivity myContext;
-    private LatLng myLatLng;
+    private LatLng mostRecentLatLng;
+    private int count = 0;
 
     private final String TAG = MapsFragment.class.getSimpleName();
 
@@ -62,6 +63,7 @@ public class MapsFragment extends Fragment {
             return null;
         }
         view = (RelativeLayout) inflater.inflate(R.layout.fragment_maps, container, false);
+        mMap = null;
         setUpMapIfNeeded();
 
         return view;
@@ -87,8 +89,26 @@ public class MapsFragment extends Fragment {
     }
 
     public void refreshFeed() {
+        count = 0;
         getFriendsList();
     }
+
+    private int getPostCount() {
+        return count;
+    }
+
+    private void setPostCount(int x) {
+        count = x;
+        if (count==0) {
+            rePositionToRecent();
+        }
+    }
+
+    private void rePositionToRecent() {
+        Log.d(TAG, "mostRecentLatLng " + mostRecentLatLng);
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mostRecentLatLng, 10.0f));
+    }
+
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -213,6 +233,7 @@ public class MapsFragment extends Fragment {
     private void getPlace (String postId, final String message, final String story, final String profilePicURL) {
         Bundle params = new Bundle();
         params.putString("fields", "place");
+        count++;
         new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
                 "/"+postId,
@@ -225,10 +246,11 @@ public class MapsFragment extends Fragment {
                             Log.d(TAG, "Place : jsonObject " + jsonObject);
                             JSONObject place = jsonObject.getJSONObject("place");
                             JSONObject location = place.getJSONObject("location");
-                            float latitude = Float.parseFloat(location.getString("latitude"));
-                            float longitude = Float.parseFloat(location.getString("longitude"));
+                            double latitude = Float.parseFloat(location.getString("latitude"));
+                            double longitude = Float.parseFloat(location.getString("longitude"));
+                            mostRecentLatLng = new LatLng(latitude, longitude);
                             pushMarker(latitude, longitude, story, message, profilePicURL);
-
+                            setPostCount(count - 1);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -237,14 +259,15 @@ public class MapsFragment extends Fragment {
         ).executeAsync();
     }
 
-    private void pushMarker (float latitude, float longitude, String title, String snippet, String markerURL) {
+    private void pushMarker (double latitude, double longitude, String title, String snippet, String markerURL) {
         try {
             MarkerOptions mark = new MarkerOptions();
             mark.position(new LatLng(latitude, longitude));
             mark.title(title);
             mark.snippet(snippet);
             Log.d(TAG, "PUSHING MARKER ::: title: " + title + " ,,, snippet: " + snippet + " ,,, latitude: " + latitude + " ,,, longitude: " + longitude + " ,,, markerURL: " + markerURL);
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
+//            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
+            mark.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker));
             mMap.addMarker(mark);
         } catch (Exception e) {
             e.printStackTrace();
