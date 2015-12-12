@@ -15,18 +15,18 @@
         app:showAsAction="ifRoom" />
 
     <item
+        android:id="@+id/action_filter"
+        android:title="@string/action_filter"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_filter_action"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/action_post"
         android:title="@string/action_post"
         android:orderInCategory="100"
         android:icon="@drawable/ic_post_event"
         app:showAsAction="ifRoom" />
 
-
-    <!--<item-->
-        <!--android:id="@+id/action_filter"-->
-        <!--android:title="@string/action_filter"-->
-        <!--android:orderInCategory="100"-->
-        <!--android:icon="@drawable/ic_filter_action"-->
-        <!--app:showAsAction="ifRoom" />-->
 
 </menu>

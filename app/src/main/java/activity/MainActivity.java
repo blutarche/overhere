@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.eggcellent.overhere.FacebookFragment;
+import com.eggcellent.overhere.FilterActivity;
 import com.eggcellent.overhere.R;
 import android.widget.ListView;
 import android.widget.ArrayAdapter;
@@ -175,10 +176,11 @@ public class MainActivity extends AppCompatActivity
             return true;
         }
 
-//        if (id == R.id.action_filter) {
-//            displayView(5);
-//            return true;
-//        }
+        if (id == R.id.action_filter) {
+            Intent intent = new Intent(this, FilterActivity.class);
+            startActivity(intent);
+            return true;
+        }
 
         // Activate the navigation drawer toggle
         if (mDrawerToggle.onOptionsItemSelected(item)) {
@@ -225,8 +227,6 @@ public class MainActivity extends AppCompatActivity
             case 3:
             break;
             case 4:
-            break;
-            case 5:
             break;
             case 6:
                 fragment = new FacebookFragment();
