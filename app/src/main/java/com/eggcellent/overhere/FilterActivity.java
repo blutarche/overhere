@@ -42,6 +42,12 @@ public class FilterActivity extends AppCompatActivity {
         timeText = (TextView) findViewById(R.id.timeValue);
         distanceText = (TextView) findViewById(R.id.distanceValue);
 
+        Intent data = getIntent();
+        timeSeekbar.setProgress(data.getIntExtra("Time", 100));
+        distanceSeekbar.setProgress(data.getIntExtra("Distance", 100));
+        hashtagEditText.setText(data.getStringExtra("Hashtag"));
+        friendsEditText.setText(data.getStringExtra("Friends"));
+
         setSeekbarChangeListener();
     }
 

@@ -9,6 +9,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.location.Criteria;
 import android.location.Location;
+import android.location.Address;
+import android.location.Geocoder;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +22,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentActivity;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,7 +33,8 @@ import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
-import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -47,11 +55,13 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class MapsFragment extends Fragment {
+public class MapsFragment extends Fragment implements
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
 
     private static GoogleMap mMap;
@@ -62,7 +72,7 @@ public class MapsFragment extends Fragment {
 
     private ProgressDialog progress;
     private final String TAG = MapsFragment.class.getSimpleName();
-
+    private HashMap<Marker, String> mHashMap = new HashMap<Marker, String>();
 
     private TextView title;
     private TextView description;
@@ -70,8 +80,32 @@ public class MapsFragment extends Fragment {
     private RelativeLayout pdb;
     private String selectedPostId;
 
-    private HashMap<Marker, String> mHashMap = new HashMap<Marker, String>();
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
 
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        // Create an instance of GoogleAPIClient.
+        super.onCreate(savedInstanceState);
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(myContext)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .build();
+        }
+    }
+
+    public void onStart() {
+        mGoogleApiClient.connect();
+        super.onStart();
+    }
+
+    public void onStop() {
+        mGoogleApiClient.disconnect();
+        super.onStop();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -85,13 +119,14 @@ public class MapsFragment extends Fragment {
 
         title = (TextView) view.findViewById(R.id.place_title);
         description = (TextView) view.findViewById(R.id.place_description);
-
         pdb = (RelativeLayout) view.findViewById(R.id.place_info_box);
 
+        currentLatLng = new LatLng(0f, 0f);
         setUpMapIfNeeded();
 
         return view;
     }
+
 
     public void setUpMapIfNeeded() {
         if (mMap != null) {
@@ -155,6 +190,14 @@ public class MapsFragment extends Fragment {
         mMap.setMyLocationEnabled(true);
     }
 
+    public void forceRefreshFeed() {
+        mMap.clear();
+        mHashMap.clear();
+        count = 0;
+        refreshFeed();
+    }
+
+
     public void refreshFeed() {
         if (count == 0) {
 //            Log.e("TEST", "getting events!");
@@ -181,7 +224,6 @@ public class MapsFragment extends Fragment {
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mostRecentLatLng, 10.0f));
     }
 
-
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         setUpMapIfNeeded();
@@ -198,6 +240,24 @@ public class MapsFragment extends Fragment {
     public void onAttach(Activity activity) {
         myContext = (FragmentActivity) activity;
         super.onAttach(activity);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        currentLatLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        Log.i("currentLatLng", currentLatLng.toString());
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 
     public interface OnFragmentInteractionListener {
@@ -334,7 +394,11 @@ public class MapsFragment extends Fragment {
                             double latitude = Float.parseFloat(location.getString("latitude"));
                             double longitude = Float.parseFloat(location.getString("longitude"));
                             mostRecentLatLng = new LatLng(latitude, longitude);
-                            pushMarker(latitude, longitude, story, message, profilePicURL, postId);
+                            Log.e("TEST distance", mostRecentLatLng.toString());
+                            Log.e("TEST distance", currentLatLng.toString());
+                            if (distanceBetween(mostRecentLatLng, currentLatLng).floatValue() < distance.floatValue()) {
+                                pushMarker(latitude, longitude, story, message, profilePicURL, postId);
+                            }
                             setPostCount(count - 1);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -361,14 +425,20 @@ public class MapsFragment extends Fragment {
     // FILTER !
     public int timeValue = 100;
     public int distanceValue = 100;
+    private Float distance = 100000000f;
     public String hashtagValue = "";
     private List<String> hashtags;
     public String friendsValue = "";
     private List<String> friends;
+    private LatLng currentLatLng;
 
     public void onRefreshByFilter() {
         hashtags = Arrays.asList(hashtagValue.split("\\s*,\\s*"));
         friends = Arrays.asList(friendsValue.split("\\s*,\\s*"));
+        distanceConvert(distanceValue);
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        currentLatLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
         spinnerInitiate();
         getFriendsList();
     }
@@ -394,7 +464,31 @@ public class MapsFragment extends Fragment {
         return false;
     }
 
+    private Float distanceBetween(LatLng la, LatLng lb) {
+        if (currentLatLng == null) return 0f;
+        double lat_a = la.latitude;
+        double lat_b = lb.latitude;
+        double lng_a = la.longitude;
+        double lng_b = lb.longitude;
+        if (lat_b==0f && lng_b==0f) return 0f;
+        double earthRadius = 3958.75;
+        double latDiff = Math.toRadians(lat_b-lat_a);
+        double lngDiff = Math.toRadians(lng_b-lng_a);
+        double a = Math.sin(latDiff /2) * Math.sin(latDiff /2) +
+                Math.cos(Math.toRadians(lat_a)) * Math.cos(Math.toRadians(lat_b)) *
+                        Math.sin(lngDiff /2) * Math.sin(lngDiff /2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        float distance = (float)earthRadius * (float)c;
 
+        int meterConversion = 1609;
+        Float dist = Float.valueOf(distance * meterConversion);
 
+        Log.d("TEST distance", dist.toString());
+        return dist;
+    }
+
+    private void distanceConvert(int d) {
+        distance = Float.valueOf(d);
+    }
 
 }

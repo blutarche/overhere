@@ -175,12 +175,16 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_refresh) {
             Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
             MapsFragment mFragment = (MapsFragment) fragment;
-            mFragment.refreshFeed();
+            mFragment.forceRefreshFeed();
             return true;
         }
 
         if (id == R.id.action_filter) {
             Intent intent = new Intent(this, FilterActivity.class);
+            intent.putExtra("Time", mapsFragment.timeValue);
+            intent.putExtra("Distance", mapsFragment.distanceValue);
+            intent.putExtra("Hashtag", mapsFragment.hashtagValue);
+            intent.putExtra("Friends", mapsFragment.friendsValue);
             startActivityForResult(intent, 1);
             return true;
         }
