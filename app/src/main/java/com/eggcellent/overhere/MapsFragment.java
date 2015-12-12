@@ -46,6 +46,7 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -142,7 +143,7 @@ public class MapsFragment extends Fragment {
     public static Intent getOpenFacebookIntent(Context context, String postId) {
         try {
             context.getPackageManager().getPackageInfo("com.facebook.katana", 0);
-            Log.e("TEST Open Facebook app", "fb://post/" + postId);
+//            Log.e("TEST Open Facebook app", "fb://post/" + postId);
             return new Intent(Intent.ACTION_VIEW, Uri.parse("fb://post/"+postId));
         } catch (Exception e) {
             return new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/me"));
@@ -156,8 +157,9 @@ public class MapsFragment extends Fragment {
 
     public void refreshFeed() {
         if (count == 0) {
-            Log.e("TEST", "getting events!");
+//            Log.e("TEST", "getting events!");
             spinnerInitiate();
+            getFriendsInfo("me");
             getFriendsList();
         }
     }
@@ -175,7 +177,7 @@ public class MapsFragment extends Fragment {
 
     private void rePositionToRecent() {
         progress.dismiss();
-        Log.d(TAG, "mostRecentLatLng " + mostRecentLatLng);
+//        Log.d(TAG, "mostRecentLatLng " + mostRecentLatLng);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mostRecentLatLng, 10.0f));
     }
 
@@ -207,12 +209,12 @@ public class MapsFragment extends Fragment {
         progress.setTitle("Loading event");
         progress.setMessage("Surely it will worth your time...");
         progress.show();
+        pdb.setVisibility(View.GONE);
     }
 
     private void getFriendsList () {
         mMap.clear();
         mHashMap.clear();
-        getFriendsInfo("me");
         new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
                 "/me/friends",
@@ -222,13 +224,15 @@ public class MapsFragment extends Fragment {
                     public void onCompleted(GraphResponse response) {
                         try {
                             JSONObject jsonObject = response.getJSONObject();
-                            Log.d(TAG, "getFriendsData onCompleted : jsonObject " + jsonObject);
+//                            Log.d(TAG, "getFriendsData onCompleted : jsonObject " + jsonObject);
                             JSONArray friends = jsonObject.getJSONArray("data");
-                            Log.d(TAG, "getFriendsData onCompleted : friends " + friends);
+//                            Log.d(TAG, "getFriendsData onCompleted : friends " + friends);
                             for(int i=0; i<friends.length(); i++){
                                 JSONObject user = friends.getJSONObject(i);
-                                getFriendsInfo(user.getString("id"));
-                                Log.d(TAG, "friend's Id: " + user.getString("id"));
+                                if (friendsValue=="" || isFriendsNameInList(user.getString("name"))) {
+                                    getFriendsInfo(user.getString("id"));
+                                    Log.e("TEST Friends Filter", user.getString("name"));
+                                }
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -237,6 +241,8 @@ public class MapsFragment extends Fragment {
                 }
         ).executeAsync();
     }
+
+
 
     private void getFriendsInfo(final String userId) {
         Bundle params = new Bundle();
@@ -250,7 +256,7 @@ public class MapsFragment extends Fragment {
                     public void onCompleted(GraphResponse response) {
                         try {
                             JSONObject jsonObject = response.getJSONObject();
-                            Log.d(TAG, "getInfo onCompleted : jsonObject " + jsonObject);
+//                            Log.d(TAG, "getInfo onCompleted : jsonObject " + jsonObject);
                             JSONObject pic = jsonObject.getJSONObject("data");
                             String url = pic.getString("url");
                             getFriendsFeed(userId, url);
@@ -274,7 +280,7 @@ public class MapsFragment extends Fragment {
                     public void onCompleted(GraphResponse response) {
                         try {
                             JSONObject jsonObject = response.getJSONObject();
-                            Log.d(TAG, "getFeed onCompleted : jsonObject " + jsonObject);
+//                            Log.d(TAG, "getFeed onCompleted : jsonObject " + jsonObject);
                             JSONArray posts = jsonObject.getJSONArray("data");
                             for(int i=0; i<posts.length(); i++) {
                                 JSONObject post = posts.getJSONObject(i);
@@ -298,7 +304,7 @@ public class MapsFragment extends Fragment {
                     public void onCompleted(GraphResponse response) {
                         try {
                             JSONObject jsonObject = response.getJSONObject();
-                            Log.d(TAG, "Post : jsonObject " + jsonObject);
+//                            Log.d(TAG, "Post : jsonObject " + jsonObject);
                             getPlace(postId, jsonObject.getString("message"), jsonObject.getString("story"), profilePicURL);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -321,7 +327,7 @@ public class MapsFragment extends Fragment {
                     public void onCompleted(GraphResponse response) {
                         try {
                             JSONObject jsonObject = response.getJSONObject();
-                            Log.d(TAG, "Place : jsonObject " + jsonObject);
+//                            Log.d(TAG, "Place : jsonObject " + jsonObject);
                             JSONObject place = jsonObject.getJSONObject("place");
                             JSONObject location = place.getJSONObject("location");
                             double latitude = Float.parseFloat(location.getString("latitude"));
@@ -343,8 +349,6 @@ public class MapsFragment extends Fragment {
             mark.position(new LatLng(latitude, longitude));
             mark.title(title);
             mark.snippet(snippet);
-            Log.d(TAG, "PUSHING MARKER ::: title: " + title + " ,,, snippet: " + snippet + " ,,, latitude: " + latitude + " ,,, longitude: " + longitude + " ,,, markerURL: " + markerURL);
-//            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
             mark.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker));
             Marker marker = mMap.addMarker(mark);
             mHashMap.put(marker, postId);
@@ -352,5 +356,36 @@ public class MapsFragment extends Fragment {
             e.printStackTrace();
         }
     }
+
+    // FILTER !
+    public int timeValue = 100;
+    public int distanceValue = 100;
+    public String hashtagValue = "";
+    private List<String> hashtags;
+    public String friendsValue = "";
+    private List<String> friends;
+
+    public void onRefreshByFilter() {
+        hashtags = Arrays.asList(hashtagValue.split("\\s*,\\s*"));
+        friends = Arrays.asList(friendsValue.split("\\s*,\\s*"));
+        spinnerInitiate();
+        getFriendsList();
+    }
+
+    public void onRefreshByNonFilter() {
+        timeValue = 100;
+        distanceValue = 100;
+        friendsValue = "";
+        hashtagValue = "";
+    }
+
+    private boolean isFriendsNameInList(String fName) {
+        for (String name:friends) {
+            if (fName.toLowerCase().contains(name.trim().toLowerCase())) return true;
+        }
+        return false;
+    }
+
+
 
 }

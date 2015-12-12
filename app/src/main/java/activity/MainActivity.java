@@ -9,6 +9,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -63,6 +64,8 @@ public class MainActivity extends AppCompatActivity
     private ArrayAdapter<String> mAdapter;
     private ActionBarDrawerToggle mDrawerToggle;
     private String mActivityTitle;
+
+    private MapsFragment mapsFragment;
 
     private int currentView;
 
@@ -213,6 +216,7 @@ public class MainActivity extends AppCompatActivity
         switch (id) {
             case 0:
                 fragment = new MapsFragment();
+                mapsFragment = (MapsFragment) fragment;
                 title = getString(R.string.title_home);
                 activityScreen();
             break;
@@ -248,10 +252,18 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == 1) {
-            if (data.hasExtra("myData1")) {
-                Toast.makeText(this, data.getExtras().getString("myData1"),
-                        Toast.LENGTH_SHORT).show();
-            }
+            mapsFragment.timeValue = data.getIntExtra("Time", 100);
+            mapsFragment.distanceValue = data.getIntExtra("Distance", 100);
+            mapsFragment.hashtagValue = data.getStringExtra("Hashtag");
+            mapsFragment.friendsValue = data.getStringExtra("Friends");
+            Log.e("TEST Filterrr", "Hashtags: "+data.getStringExtra("Hashtag"));
+            Log.e("TEST Filterrr", "Friends: "+data.getStringExtra("Friends"));
+            mapsFragment.onRefreshByFilter();
+            Log.e("TEST Apply from Filter", "Apply OK!");
+        }
+        else if (resultCode == RESULT_CANCELED && requestCode == 1) {
+
+            Log.e("TEST Back from Filter", "Back OK!");
         }
     }
 

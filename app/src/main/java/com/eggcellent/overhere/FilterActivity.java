@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -47,9 +48,13 @@ public class FilterActivity extends AppCompatActivity {
     private void setSeekbarChangeListener() {
         timeSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (progress == 100) {
@@ -85,14 +90,45 @@ public class FilterActivity extends AppCompatActivity {
                 } else if (25 <= progress && progress < 30) {
                     timeText.setText("3 days");
                 } else if (2 <= progress && progress < 25) {
-                    timeText.setText((progress)+" hours");
-                } else if (progress==1) {
+                    timeText.setText((progress) + " hours");
+                } else if (progress == 1) {
                     timeText.setText("1 hour");
-                } else if (progress==0) {
+                } else if (progress == 0) {
                     timeText.setText("30 mins");
                 }
             }
         });
+        distanceSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (progress == 100) {
+                    distanceText.setText("Global");
+                } else if (80 <= progress && progress < 100) {
+                    int temp = progress - 50;
+                    distanceText.setText((temp * 100) + " km");
+                } else if (30 <= progress && progress < 80) {
+                    int temp = progress - 29;
+                    distanceText.setText((temp * 50) + " km");
+                } else {
+                    distanceText.setText((progress + 1) + " km");
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        setResult(RESULT_CANCELED, intent);
+        finish();
     }
 
     @Override
@@ -110,15 +146,26 @@ public class FilterActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
+        if (id == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+
         if (id == R.id.action_ok) {
-            Intent intent = new Intent();
-            intent.putExtra("Time", timeSeekbar.getProgress());
-            intent.putExtra("Distance", distanceSeekbar.getProgress());
-            setResult(RESULT_OK, intent);
-            finish();
+            applyActivity();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void applyActivity() {
+        Intent intent = new Intent();
+        intent.putExtra("Time", timeSeekbar.getProgress());
+        intent.putExtra("Distance", distanceSeekbar.getProgress());
+        intent.putExtra("Hashtag", hashtagEditText.getText().toString());
+        intent.putExtra("Friends", friendsEditText.getText().toString());
+        setResult(RESULT_OK, intent);
+        finish();
     }
 }
