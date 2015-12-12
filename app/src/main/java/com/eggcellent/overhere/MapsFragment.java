@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Criteria;
 import android.location.Location;
@@ -40,6 +41,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -186,7 +188,6 @@ public class MapsFragment extends Fragment implements
     }
 
     private static void setUpMap() {
-
         mMap.setMyLocationEnabled(true);
     }
 
@@ -221,7 +222,19 @@ public class MapsFragment extends Fragment implements
     private void rePositionToRecent() {
         progress.dismiss();
 //        Log.d(TAG, "mostRecentLatLng " + mostRecentLatLng);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mostRecentLatLng, 10.0f));
+        if (currentLatLng.latitude!=0f && currentLatLng.longitude!=0f) {
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 10.0f));
+            if (distance != 100000000f) {
+                mMap.addCircle(new CircleOptions()
+                        .center(currentLatLng)
+                        .radius(distance)
+                        .strokeColor(Color.argb(128, 0, 0, 0))
+                        .fillColor(Color.argb(60, 197,224,220)));
+
+            }
+        }
+        else
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mostRecentLatLng, 10.0f));
     }
 
     @Override
@@ -436,9 +449,9 @@ public class MapsFragment extends Fragment implements
         hashtags = Arrays.asList(hashtagValue.split("\\s*,\\s*"));
         friends = Arrays.asList(friendsValue.split("\\s*,\\s*"));
         distanceConvert(distanceValue);
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-        currentLatLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null)
+            currentLatLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
         spinnerInitiate();
         getFriendsList();
     }
@@ -488,7 +501,17 @@ public class MapsFragment extends Fragment implements
     }
 
     private void distanceConvert(int d) {
-        distance = Float.valueOf(d);
+        if (d == 100) {
+            distance = 100000000f;
+        } else if (80 <= d && d < 100) {
+            int temp = d - 50;
+            distance = temp*100f*1000f;
+        } else if (30 <= d && d < 80) {
+            int temp = d - 29;
+            distance = temp*50f*1000f;
+        } else {
+            distance = (d+1f)*1000f;
+        }
     }
 
 }
