@@ -3,6 +3,7 @@ package com.eggcellent.overhere;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -11,6 +12,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentActivity;
@@ -31,10 +33,12 @@ import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -42,13 +46,12 @@ import org.json.JSONObject;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
 public class MapsFragment extends Fragment {
 
-
-    private static View view;
 
     private static GoogleMap mMap;
 
@@ -60,6 +63,15 @@ public class MapsFragment extends Fragment {
     private final String TAG = MapsFragment.class.getSimpleName();
 
 
+    private TextView title;
+    private TextView description;
+    private View view;
+    private RelativeLayout pdb;
+    private String selectedPostId;
+
+    private HashMap<Marker, String> mHashMap = new HashMap<Marker, String>();
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -69,6 +81,12 @@ public class MapsFragment extends Fragment {
         view = (RelativeLayout) inflater.inflate(R.layout.fragment_maps, container, false);
         mMap = null;
         progress = new ProgressDialog(getActivity());
+
+        title = (TextView) view.findViewById(R.id.place_title);
+        description = (TextView) view.findViewById(R.id.place_description);
+
+        pdb = (RelativeLayout) view.findViewById(R.id.place_info_box);
+
         setUpMapIfNeeded();
 
         return view;
@@ -87,9 +105,52 @@ public class MapsFragment extends Fragment {
             }
         }
         getFriendsList();
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                title.setText(marker.getTitle());
+                description.setText(marker.getSnippet());
+                selectedPostId = mHashMap.get(marker);
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
+                if (pdb.getVisibility() == View.GONE) {
+                    pdb.setVisibility(View.VISIBLE);
+                }
+                return true;
+            }
+
+        });
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng point) {
+                if (pdb.getVisibility() == View.VISIBLE) {
+                    pdb.setVisibility(View.GONE);
+                }
+            }
+        });
+        FloatingActionButton fab = (FloatingActionButton) view.findViewById(R.id.fab_place);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent facebookPost = getOpenFacebookIntent(myContext, selectedPostId);
+                startActivity(facebookPost);
+            }
+        });
+    }
+
+    public static Intent getOpenFacebookIntent(Context context, String postId) {
+        try {
+            context.getPackageManager().getPackageInfo("com.facebook.katana", 0);
+            Log.e("TEST Open Facebook app", "fb://post/" + postId);
+            return new Intent(Intent.ACTION_VIEW, Uri.parse("fb://post/"+postId));
+        } catch (Exception e) {
+            return new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.facebook.com/me"));
+        }
     }
 
     private static void setUpMap() {
+
         mMap.setMyLocationEnabled(true);
     }
 
@@ -150,6 +211,7 @@ public class MapsFragment extends Fragment {
 
     private void getFriendsList () {
         mMap.clear();
+        mHashMap.clear();
         getFriendsInfo("me");
         new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
@@ -246,7 +308,7 @@ public class MapsFragment extends Fragment {
         ).executeAsync();
     }
 
-    private void getPlace (String postId, final String message, final String story, final String profilePicURL) {
+    private void getPlace (final String postId, final String message, final String story, final String profilePicURL) {
         Bundle params = new Bundle();
         params.putString("fields", "place");
         count++;
@@ -265,7 +327,7 @@ public class MapsFragment extends Fragment {
                             double latitude = Float.parseFloat(location.getString("latitude"));
                             double longitude = Float.parseFloat(location.getString("longitude"));
                             mostRecentLatLng = new LatLng(latitude, longitude);
-                            pushMarker(latitude, longitude, story, message, profilePicURL);
+                            pushMarker(latitude, longitude, story, message, profilePicURL, postId);
                             setPostCount(count - 1);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -275,7 +337,7 @@ public class MapsFragment extends Fragment {
         ).executeAsync();
     }
 
-    private void pushMarker (double latitude, double longitude, String title, String snippet, String markerURL) {
+    private void pushMarker (double latitude, double longitude, String title, String snippet, String markerURL, String postId) {
         try {
             MarkerOptions mark = new MarkerOptions();
             mark.position(new LatLng(latitude, longitude));
@@ -284,7 +346,8 @@ public class MapsFragment extends Fragment {
             Log.d(TAG, "PUSHING MARKER ::: title: " + title + " ,,, snippet: " + snippet + " ,,, latitude: " + latitude + " ,,, longitude: " + longitude + " ,,, markerURL: " + markerURL);
 //            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 12.0f));
             mark.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker));
-            mMap.addMarker(mark);
+            Marker marker = mMap.addMarker(mark);
+            mHashMap.put(marker, postId);
         } catch (Exception e) {
             e.printStackTrace();
         }
