@@ -1,14 +1,26 @@
 package com.eggcellent.overhere;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 public class FilterActivity extends AppCompatActivity {
 
     private Toolbar mToolbar;
+
+    private SeekBar timeSeekbar;
+    private SeekBar distanceSeekbar;
+    private EditText hashtagEditText;
+    private EditText friendsEditText;
+
+    private TextView timeText;
+    private TextView distanceText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +32,67 @@ public class FilterActivity extends AppCompatActivity {
         assert getSupportActionBar() != null;
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setHomeButtonEnabled(true);
+
+        timeSeekbar = (SeekBar) findViewById(R.id.timeSeekbar);
+        distanceSeekbar = (SeekBar) findViewById(R.id.distanceSeekbar);
+        hashtagEditText = (EditText) findViewById(R.id.hashtagEditText);
+        friendsEditText = (EditText) findViewById(R.id.friendsEditText);
+
+        timeText = (TextView) findViewById(R.id.timeValue);
+        distanceText = (TextView) findViewById(R.id.distanceValue);
+
+        setSeekbarChangeListener();
+    }
+
+    private void setSeekbarChangeListener() {
+        timeSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (progress == 100) {
+                    timeText.setText("1 year");
+                } else if (95 <= progress && progress < 100) {
+                    timeText.setText("11 months");
+                } else if (90 <= progress && progress < 95) {
+                    timeText.setText("10 months");
+                } else if (85 <= progress && progress < 90) {
+                    timeText.setText("9 months");
+                } else if (80 <= progress && progress < 85) {
+                    timeText.setText("8 months");
+                } else if (75 <= progress && progress < 80) {
+                    timeText.setText("7 months");
+                } else if (70 <= progress && progress < 75) {
+                    timeText.setText("6 months");
+                } else if (65 <= progress && progress < 70) {
+                    timeText.setText("5 months");
+                } else if (60 <= progress && progress < 65) {
+                    timeText.setText("4 months");
+                } else if (55 <= progress && progress < 60) {
+                    timeText.setText("3 months");
+                } else if (50 <= progress && progress < 55) {
+                    timeText.setText("2 months");
+                } else if (45 <= progress && progress < 50) {
+                    timeText.setText("1 month");
+                } else if (40 <= progress && progress < 45) {
+                    timeText.setText("3 weeks");
+                } else if (35 <= progress && progress < 40) {
+                    timeText.setText("2 weeks");
+                } else if (30 <= progress && progress < 35) {
+                    timeText.setText("1 week");
+                } else if (25 <= progress && progress < 30) {
+                    timeText.setText("3 days");
+                } else if (2 <= progress && progress < 25) {
+                    timeText.setText((progress)+" hours");
+                } else if (progress==1) {
+                    timeText.setText("1 hour");
+                } else if (progress==0) {
+                    timeText.setText("30 mins");
+                }
+            }
+        });
     }
 
     @Override
@@ -37,7 +110,12 @@ public class FilterActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_ok) {
+            Intent intent = new Intent();
+            intent.putExtra("Time", timeSeekbar.getProgress());
+            intent.putExtra("Distance", distanceSeekbar.getProgress());
+            setResult(RESULT_OK, intent);
+            finish();
             return true;
         }
 

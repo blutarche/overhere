@@ -178,7 +178,7 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.action_filter) {
             Intent intent = new Intent(this, FilterActivity.class);
-            startActivity(intent);
+            startActivityForResult(intent, 1);
             return true;
         }
 
@@ -242,6 +242,16 @@ public class MainActivity extends AppCompatActivity
 
             // set the toolbar title
             getSupportActionBar().setTitle(title);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == 1) {
+            if (data.hasExtra("myData1")) {
+                Toast.makeText(this, data.getExtras().getString("myData1"),
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

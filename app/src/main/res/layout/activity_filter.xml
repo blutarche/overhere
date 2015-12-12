@@ -46,8 +46,7 @@
                     android:text="1 year"
                     android:layout_toRightOf="@id/timeStaticTextView"
                     android:padding="8dp"
-                    android:textColor="#fff"
-                    android:background="@color/colorPrimaryDark"
+                    android:textColor="#888"
                     android:textSize="18sp"/>
                 <SeekBar
                     android:id="@+id/timeSeekbar"
@@ -60,7 +59,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="5 min"
+                    android:text="30 mins"
                     android:textSize="14sp"
                     android:layout_below="@id/timeSeekbar"
                     android:layout_marginTop="8dp"/>
@@ -101,8 +100,7 @@
                     android:text="Global"
                     android:layout_toRightOf="@id/distanceStaticTextView"
                     android:padding="8dp"
-                    android:textColor="#fff"
-                    android:background="@color/colorPrimaryDark"
+                    android:textColor="#888"
                     android:textSize="18sp"/>
                 <SeekBar
                     android:id="@+id/distanceSeekbar"
@@ -150,6 +148,7 @@
                     android:padding="8dp"
                     android:textColor="#222"/>
                 <EditText
+                    android:id="@+id/hashtagEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/hashtagStaticTextView"
@@ -177,6 +176,7 @@
                     android:padding="8dp"
                     android:textColor="#222"/>
                 <EditText
+                    android:id="@+id/friendsEditText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/friendsStaticTextView"

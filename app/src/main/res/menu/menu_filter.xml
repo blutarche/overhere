@@ -11,7 +11,7 @@
         android:id="@+id/action_ok"
         android:title="@string/action_ok"
         android:orderInCategory="100"
-        android:icon="@drawable/ic_refresh_action"
+        android:icon="@drawable/ic_action_apply_filter"
         app:showAsAction="ifRoom" />
 
 
