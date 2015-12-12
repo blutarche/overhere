@@ -305,7 +305,8 @@ public class MapsFragment extends Fragment {
                         try {
                             JSONObject jsonObject = response.getJSONObject();
 //                            Log.d(TAG, "Post : jsonObject " + jsonObject);
-                            getPlace(postId, jsonObject.getString("message"), jsonObject.getString("story"), profilePicURL);
+                            if (hashtagValue=="" || isHashtagInList(jsonObject.getString("message")))
+                                getPlace(postId, jsonObject.getString("message"), jsonObject.getString("story"), profilePicURL);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -385,6 +386,14 @@ public class MapsFragment extends Fragment {
         }
         return false;
     }
+
+    private boolean isHashtagInList(String sHashtag) {
+        for (String hashtag:hashtags) {
+            if (sHashtag.toLowerCase().contains(hashtag.trim().toLowerCase())) return true;
+        }
+        return false;
+    }
+
 
 
 
