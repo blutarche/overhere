@@ -247,8 +247,6 @@ public class MainActivity extends AppCompatActivity
             fragmentTransaction.setCustomAnimations(R.anim.enter, R.anim.exit);
             fragmentTransaction.replace(R.id.container, fragment);
             fragmentTransaction.commit();
-
-            // set the toolbar title
             getSupportActionBar().setTitle(title);
         }
     }

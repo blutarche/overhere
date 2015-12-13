@@ -55,6 +55,8 @@ import org.json.JSONObject;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -260,7 +262,7 @@ public class MapsFragment extends Fragment implements
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
         currentLatLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-        Log.i("currentLatLng", currentLatLng.toString());
+//        Log.i("currentLatLng", currentLatLng.toString());
     }
 
     @Override
@@ -304,7 +306,7 @@ public class MapsFragment extends Fragment implements
                                 JSONObject user = friends.getJSONObject(i);
                                 if (friendsValue=="" || isFriendsNameInList(user.getString("name"))) {
                                     getFriendsInfo(user.getString("id"));
-                                    Log.e("TEST Friends Filter", user.getString("name"));
+//                                    Log.e("TEST Friends Filter", user.getString("name"));
                                 }
                             }
                         } catch (Exception e) {
@@ -341,7 +343,7 @@ public class MapsFragment extends Fragment implements
         ).executeAsync();
     }
 
-    private void getFriendsFeed(String userId, final String profilePicURL) {
+    private void getFriendsFeed(final String userId, final String profilePicURL) {
         Bundle params = new Bundle();
         params.putString("with", "location");
         new GraphRequest(
@@ -357,7 +359,7 @@ public class MapsFragment extends Fragment implements
                             JSONArray posts = jsonObject.getJSONArray("data");
                             for(int i=0; i<posts.length(); i++) {
                                 JSONObject post = posts.getJSONObject(i);
-                                getPost(post.getString("id"), profilePicURL);
+                                getPost(post.getString("id"), profilePicURL, userId);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -367,7 +369,7 @@ public class MapsFragment extends Fragment implements
         ).executeAsync();
     }
 
-    private void getPost (final String postId, final String profilePicURL) {
+    private void getPost (final String postId, final String profilePicURL, final String userId) {
         new GraphRequest(
                 AccessToken.getCurrentAccessToken(),
                 "/"+postId,
@@ -376,10 +378,25 @@ public class MapsFragment extends Fragment implements
                 new GraphRequest.Callback() {
                     public void onCompleted(GraphResponse response) {
                         try {
+                            Log.d("TEST updated time", "response = "+response.toString());
+                            Log.d("TEST updated time", "postId = "+postId);
+                            Log.d("TEST updated time", "userId = "+userId);
                             JSONObject jsonObject = response.getJSONObject();
-//                            Log.d(TAG, "Post : jsonObject " + jsonObject);
-                            if (hashtagValue=="" || isHashtagInList(jsonObject.getString("message")))
+                            Log.d("TEST updated time", "jsonObject = " + jsonObject.toString());
+                            String dateTime = jsonObject.getString("created_time");
+                            Log.d("TEST updated time", "dateTime = " + dateTime);
+                            SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+0000'");
+                            Date date = null;
+                            try {
+                                date = format.parse(dateTime);
+                                System.out.println(date);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            if ((hashtagValue=="" || isHashtagInList(jsonObject.getString("message"))) &&
+                                (timeValue==100 || date==null || isTimeWithin(date))) {
                                 getPlace(postId, jsonObject.getString("message"), jsonObject.getString("story"), profilePicURL);
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -407,13 +424,15 @@ public class MapsFragment extends Fragment implements
                             double latitude = Float.parseFloat(location.getString("latitude"));
                             double longitude = Float.parseFloat(location.getString("longitude"));
                             mostRecentLatLng = new LatLng(latitude, longitude);
-                            Log.e("TEST distance", mostRecentLatLng.toString());
-                            Log.e("TEST distance", currentLatLng.toString());
+//                            Log.e("TEST distance", mostRecentLatLng.toString());
+//                            Log.e("TEST distance", currentLatLng.toString());
                             if (distanceBetween(mostRecentLatLng, currentLatLng).floatValue() < distance.floatValue()) {
                                 pushMarker(latitude, longitude, story, message, profilePicURL, postId);
                             }
                             setPostCount(count - 1);
+                            Log.e("TEST updated time", "count = "+count);
                         } catch (Exception e) {
+                            setPostCount(count - 1);
                             e.printStackTrace();
                         }
                     }
@@ -437,6 +456,7 @@ public class MapsFragment extends Fragment implements
 
     // FILTER !
     public int timeValue = 100;
+    private long timeThreshold = 1000000000;
     public int distanceValue = 100;
     private Float distance = 100000000f;
     public String hashtagValue = "";
@@ -446,12 +466,14 @@ public class MapsFragment extends Fragment implements
     private LatLng currentLatLng;
 
     public void onRefreshByFilter() {
+        timeConvert(timeValue);
+        distanceConvert(distanceValue);
         hashtags = Arrays.asList(hashtagValue.split("\\s*,\\s*"));
         friends = Arrays.asList(friendsValue.split("\\s*,\\s*"));
-        distanceConvert(distanceValue);
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null)
+        if (mLastLocation != null) {
             currentLatLng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        }
         spinnerInitiate();
         getFriendsList();
     }
@@ -477,6 +499,14 @@ public class MapsFragment extends Fragment implements
         return false;
     }
 
+    private boolean isTimeWithin (Date date) {
+        long postTime = date.getTime();
+        long currentTime = new Date().getTime();
+        Log.d("TEST updated time", "postTime = "+postTime);
+        Log.d("TEST updated time", "currentTime = "+currentTime);
+        return (currentTime-postTime)/1000 < timeThreshold;
+    }
+
     private Float distanceBetween(LatLng la, LatLng lb) {
         if (currentLatLng == null) return 0f;
         double lat_a = la.latitude;
@@ -496,8 +526,50 @@ public class MapsFragment extends Fragment implements
         int meterConversion = 1609;
         Float dist = Float.valueOf(distance * meterConversion);
 
-        Log.d("TEST distance", dist.toString());
+//        Log.d("TEST distance", dist.toString());
         return dist;
+    }
+
+    private void timeConvert(int t) {
+        if (t == 100) {
+            timeThreshold = 60*60*24*365;
+        } else if (95 <= t && t < 100) {
+            timeThreshold = 60*60*24*30*11;
+        } else if (90 <= t && t < 95) {
+            timeThreshold = 60*60*24*30*10;
+        } else if (85 <= t && t < 90) {
+            timeThreshold = 60*60*24*30*9;
+        } else if (80 <= t && t < 85) {
+            timeThreshold = 60*60*24*30*8;
+        } else if (75 <= t && t < 80) {
+            timeThreshold = 60*60*24*30*7;
+        } else if (70 <= t && t < 75) {
+            timeThreshold = 60*60*24*30*6;
+        } else if (65 <= t && t < 70) {
+            timeThreshold = 60*60*24*30*5;
+        } else if (60 <= t && t < 65) {
+            timeThreshold = 60*60*24*30*4;
+        } else if (55 <= t && t < 60) {
+            timeThreshold = 60*60*24*30*3;
+        } else if (50 <= t && t < 55) {
+            timeThreshold = 60*60*24*30*2;
+        } else if (45 <= t && t < 50) {
+            timeThreshold = 60*60*24*30*1;
+        } else if (40 <= t && t < 45) {
+            timeThreshold = 60*60*24*21;
+        } else if (35 <= t && t < 40) {
+            timeThreshold = 60*60*24*14;
+        } else if (30 <= t && t < 35) {
+            timeThreshold = 60*60*24*7;
+        } else if (25 <= t && t < 30) {
+            timeThreshold = 60*60*24*3;
+        } else if (2 <= t && t < 25) {
+            timeThreshold = 60*60*t;
+        } else if (t == 1) {
+            timeThreshold = 60*60;
+        } else if (t == 0) {
+            timeThreshold = 60*30;
+        }
     }
 
     private void distanceConvert(int d) {
